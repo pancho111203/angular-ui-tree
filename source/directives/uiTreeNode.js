@@ -440,7 +440,7 @@
                         targetElm.after(placeElm);
                         dragInfo.moveTo(targetNode.$parentNodesScope, targetNode.siblings(), targetNode.index() + 1);
                       }
-                    } else if (!targetBefore && targetNode.accept(scope, targetNode.childNodesCount())) { // we have to check if it can add the dragging node as a child
+                    } else if (targetNode.accept(scope, targetNode.childNodesCount())) { // we have to check if it can add the dragging node as a child
                       targetNode.$childNodesScope.$element.append(placeElm);
                       dragInfo.moveTo(targetNode.$childNodesScope, targetNode.childNodes(), targetNode.childNodesCount());
                     } else {
@@ -464,6 +464,7 @@
                 $q.when(scope.$treeScope.$callbacks.beforeDrop(dragEventArgs))
                     // promise resolved (or callback didn't return false)
                     .then(function (allowDrop) {
+
                       if (allowDrop !== false && scope.$$allowNodeDrop && !outOfBounds) { // node drop accepted)
                         dragInfo.apply();
                         // fire the dropped callback only if the move was successful

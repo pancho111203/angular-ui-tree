@@ -764,6 +764,7 @@
                 targetNode,
                 targetElm,
                 isEmpty,
+                scrollDownBy,
                 targetOffset,
                 targetBefore;
 
@@ -808,8 +809,9 @@
                 bottom_scroll = top_scroll + (window.innerHeight || $window.document.clientHeight || $window.document.clientHeight);
 
                 // to scroll down if cursor y-position is greater than the bottom position the vertical scroll
-                if (bottom_scroll < eventObj.pageY && bottom_scroll <= document_height) {
-                  window.scrollBy(0, 10);
+                if (bottom_scroll < eventObj.pageY && bottom_scroll < document_height) {
+                  scrollDownBy = Math.min(document_height - bottom_scroll, 10);
+                  window.scrollBy(0, scrollDownBy);
                 }
 
                 // to scroll top if cursor y-position is less than the top position the vertical scroll
@@ -1005,6 +1007,9 @@
                 $q.when(scope.$treeScope.$callbacks.beforeDrop(dragEventArgs))
                     // promise resolved (or callback didn't return false)
                     .then(function (allowDrop) {
+                      console.log(allowDrop);
+                      console.log(scope.$$allowNodeDrop);
+                      console.log(outOfBounds);
                       if (allowDrop !== false && scope.$$allowNodeDrop && !outOfBounds) { // node drop accepted)
                         dragInfo.apply();
                         // fire the dropped callback only if the move was successful
