@@ -33,7 +33,6 @@ module.exports = function (gulp, $) {
 
   gulp.task('watch', ['connect'], function () {
     gulp.watch([
-      '.jshintrc',
       'source/**/*.js',
       'examples/**/*.html'
     ], function (event) {
@@ -42,9 +41,8 @@ module.exports = function (gulp, $) {
     });
 
     gulp.watch([
-      '.jshintrc',
       'source/**/*.js'
-    ], ['jshint', 'jscs']);
+    ], ['jscs']);
 
     gulp.watch([
       'source/**/*.scss'

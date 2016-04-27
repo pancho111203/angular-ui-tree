@@ -146,6 +146,22 @@
 
             };
 
+            callbacks.startSelect = function(){
+
+            };
+
+            callbacks.select = function(node){
+
+            };
+
+            callbacks.deselect = function(node){
+
+            };
+
+            callbacks.endSelect = function(){
+
+            };
+
             /**
              * Callback is fired when a user drops a node (but prior to processing the drop action)
              * beforeDrop can return a Promise, truthy, or falsy (returning nothing is falsy).
@@ -170,6 +186,41 @@
               scope.$callbacks = callbacks;
             }, true);
 
+
+            scope.$watch(attrs.select, function(val){
+              val = val ? val : attrs.select;
+              if(angular.isNumber(val)){
+                scope.$multiSelectKey = val;
+              }
+            });
+
+            var keydownHandler = function(e){
+              console.log(scope.selecteds);
+              if(e.keyCode === scope.$multiSelectKey){
+                if(!scope.$multiSelect){
+                  scope.$apply(function(){
+                    scope.$multiSelect = true;
+                    scope.$callbacks.startSelect();
+                  })
+                }
+              }
+            };
+
+
+            var keyupHandler = function(e){
+
+              if(e.keyCode === scope.$multiSelectKey){
+                if(scope.$multiSelect){
+                  scope.$apply(function(){
+                    scope.$multiSelect = false;
+                    scope.$callbacks.endSelect();
+                  });
+                }
+              }
+            };
+
+            angular.element($window.document).bind('keyup', keyupHandler);
+            angular.element($window.document).bind('keydown', keydownHandler);
 
           }
         };

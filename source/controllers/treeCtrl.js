@@ -20,6 +20,10 @@
         $scope.cloneEnabled = false;
         $scope.nodropEnabled = false;
 
+        $scope.selecteds = [];
+        $scope.$multiSelectKey = undefined;
+        $scope.$multiSelect = false;
+
         // Check if it's a empty tree
         $scope.isEmpty = function () {
           return ($scope.$nodesScope && $scope.$nodesScope.$modelValue

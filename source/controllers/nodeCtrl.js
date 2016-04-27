@@ -16,6 +16,11 @@
         $scope.$type = 'uiTreeNode';
         $scope.$$allowNodeDrop = false;
         $scope.collapsed = false;
+        $scope.selected = false;
+
+        $scope.$dragInfo = null;
+
+        $element.$scope = $scope;
 
         $scope.init = function (controllersArr) {
           var treeNodesCtrl = controllersArr[0];
@@ -131,6 +136,34 @@
 
         $scope.maxSubDepth = function () {
           return $scope.$childNodesScope ? countSubTreeDepth($scope.$childNodesScope) : 0;
+        };
+
+        $scope.toggleSelected = function () {
+          if($scope.selected){
+            $scope.deselect();
+          }else{
+            $scope.select();
+          }
+        };
+
+        $scope.deselect = function(){
+          if($scope.selected){
+            $scope.selected = false;
+
+            $scope.$treeScope.selecteds.splice($scope.$treeScope.selecteds.indexOf($scope.$element), 1);
+
+            $scope.$treeScope.$callbacks.deselect($scope);
+          }
+        };
+
+        $scope.select = function(){
+          if(!$scope.selected){
+            $scope.selected = true;
+
+            $scope.$treeScope.selecteds.push($scope.$element);
+
+            $scope.$treeScope.$callbacks.select($scope);
+          }
         };
       }
     ]);

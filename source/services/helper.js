@@ -333,6 +333,9 @@
           elementIsPlaceholder: function (element) {
             return element.hasClass(treeConfig.placeholderClass);
           },
+          elementIsPlaceholderWrapper: function(element) {
+            return element.hasClass(treeConfig.placeHoldersWrapperClass);
+          },
           elementContainsTreeNodeHandler: function (element) {
             return element[0].querySelectorAll('[ui-tree-handle]').length >= 1;
           },

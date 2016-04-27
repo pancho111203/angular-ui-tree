@@ -3,6 +3,22 @@
 
   angular.module('demoApp')
     .controller('BasicExampleCtrl', ['$scope', function ($scope) {
+        $scope.configCallbacks = {
+            startSelect : function(){
+
+            },
+            endSelect : function(){
+
+            },
+            select : function(node){
+                node.$element.css('background-color', 'blue');
+            },
+            deselect : function(node){
+                node.$element.css('background-color', 'red');
+            }
+
+        };
+
       $scope.remove = function (scope) {
         scope.remove();
       };
