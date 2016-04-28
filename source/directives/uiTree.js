@@ -150,12 +150,17 @@
 
             };
 
+            /**
+             * Callback checks if the node can be selected
+             * @param node
+             * @returns {boolean}
+             */
             callbacks.select = function(node){
-
+              return true;
             };
 
             callbacks.deselect = function(node){
-
+              return true;
             };
 
             callbacks.endSelect = function(){

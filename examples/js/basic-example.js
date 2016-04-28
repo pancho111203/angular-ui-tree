@@ -12,9 +12,11 @@
             },
             select : function(node){
                 node.$element.css('background-color', 'blue');
+                return true;
             },
             deselect : function(node){
                 node.$element.css('background-color', 'red');
+                return true;
             }
 
         };

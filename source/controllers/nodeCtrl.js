@@ -147,12 +147,10 @@
         };
 
         $scope.deselect = function(){
-          if($scope.selected){
+          if($scope.selected && $scope.$treeScope.$callbacks.deselect($scope)){
             $scope.selected = false;
 
             $scope.$treeScope.selecteds.splice($scope.$treeScope.selecteds.indexOf($scope.$element), 1);
-
-            $scope.$treeScope.$callbacks.deselect($scope);
           }
         };
 
@@ -163,12 +161,12 @@
         };
 
         $scope.select = function(){
-          if(!$scope.selected){
+          console.log($scope.$treeScope.$callbacks.select);
+          console.log($scope.$treeScope.$callbacks.select($scope));
+          if(!$scope.selected && $scope.$treeScope.$callbacks.select($scope)){
             $scope.selected = true;
 
             $scope.$treeScope.selecteds.push($scope.$element);
-
-            $scope.$treeScope.$callbacks.select($scope);
           }
         };
       }
