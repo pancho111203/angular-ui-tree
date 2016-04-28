@@ -302,7 +302,7 @@
 
                                     var clone = selectedElement.clone();
                                     selectedElementDrag.append(clone);
-                                    if (!selectedElementScope.$treeScope.cloneEnabled) {
+                                    if (!selectedElementScope.$treeScope.cloneEnabled  && scope.sourceOnly) {
                                         selectedElement.addClass(config.hiddenClass);
                                     }
 
@@ -330,6 +330,9 @@
                                 };
                                 bindDragMoveEvents();
 
+                                if (scope.sourceOnly) {
+                                    placeElm.css('display', 'none');
+                                }
 
                                 angular.forEach(scope.$treeScope.selecteds, function(selectedElement) {
                                     var selectedElementScope = selectedElement.$scope;
