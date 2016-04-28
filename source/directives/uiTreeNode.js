@@ -13,7 +13,7 @@
                         // todo startPos is unused
                         var config = {},
                             hasTouch = 'ontouchstart' in window,
-                            startPos, firstMoving, dragInfo, pos,
+                            startPos, firstMoving, pos,
                             placeElm, hiddenPlaceElm, dragElm,
                             treeScope = null,
                             elements, // As a parameter for callbacks
@@ -41,11 +41,18 @@
                             isHandleChild,
                             el;
 
+
+
                         angular.extend(config, treeConfig);
                         if (config.nodeClass) {
                             element.addClass(config.nodeClass);
                         }
                         scope.init(controllersArr);
+
+                        if(!scope || !scope.$treeScope){
+                            console.log('FATAL ERROR: scope of element or tree not defined');
+                            return;
+                        }
 
                         scope.collapsed = !!UiTreeHelper.getNodeAttribute(scope, 'collapsed') || treeConfig.defaultCollapsed;
                         scope.sourceOnly = scope.nodropEnabled || scope.$treeScope.nodropEnabled;
@@ -85,7 +92,7 @@
 
 
                             if (!checkParentSelect(scope)) {
-                                removeChildSelect(scope);
+                                removeChildSelect();
                                 scope.$apply(scope.toggleSelected);
                             }
                         };
@@ -108,12 +115,19 @@
                             return selected;
                         };
 
-                        var removeChildSelect = function (elementScope) {
+                        var removeChildSelect = function(){
+                            removeChildSelectRecursive(scope);
+                            scope.$treeScope.applyDeselectTransaction();
+                        };
+
+                        var removeChildSelectRecursive = function (elementScope) {
                             elementScope = (angular.isUndefined(elementScope)) ? scope : elementScope;
                             if (elementScope.hasChild()) {
                                 angular.forEach(elementScope.childNodes(), function (childNodeScope) {
-                                    childNodeScope.$apply(childNodeScope.deselect);
-                                    removeChildSelect(childNodeScope);
+                                    if(childNodeScope){
+                                        childNodeScope.deselectTransaction();
+                                        removeChildSelectRecursive(childNodeScope);
+                                    }
                                 });
                             }
                         };
@@ -189,7 +203,6 @@
                             eventObj = UiTreeHelper.eventObj(e);
 
                             firstMoving = true;
-                            dragInfo = UiTreeHelper.dragInfo(scope);
 
                             tagName = element.prop('tagName');
 
@@ -218,13 +231,10 @@
                                 if (config.hiddenClass) {
                                     angular.forEach(scope.$treeScope.selecteds, function (selectedElement) {
                                         //hiddenPlaceElm.addClass(config.hiddenClass);
-
                                         var selectedElementScope = selectedElement.$scope;
-
-                                        setTimeout(function () {
-                                            selectedElementScope.deselect();
-                                        }, 0);
+                                        selectedElementScope.deselectTransaction();
                                     });
+                                    scope.$treeScope.applyDeselectTransaction();
 
                                     scope.$treeScope.selecteds = [];
                                 }
@@ -248,9 +258,10 @@
 
                                 hiddenPlaceElm = angular.element($window.document.createElement('div'));
 
+
                                 dragElm = angular.element($window.document.createElement('div')).addClass(treeConfig.dragWrapperClass);
 
-                                pos = UiTreeHelper.positionStarted(eventObj, angular.element(scope.$treeScope.selecteds[0]));
+                                pos = UiTreeHelper.positionStarted(eventObj, scope.$treeScope.selecteds[0]);
 
                                 var firstElement = angular.element(scope.$treeScope.selecteds[0]);
                                 var firstElementOffset = angular.copy(UiTreeHelper.offset(firstElement));
@@ -351,7 +362,7 @@
                                 }
                                 element.after(placeElm);
                                 element.after(hiddenPlaceElm);
-                                if (dragInfo.isClone() && scope.sourceOnly) {
+                                if (scope.$dragInfo.isClone() && scope.sourceOnly) {
                                     dragElm.append(cloneElm);
                                 } else {
                                     dragElm.append(element);
@@ -516,22 +527,19 @@
                                     }
                                 }
 
-
-                                if(angular.isDefined(scope.$treeScope.selecteds) && scope.$treeScope.selecteds.length > 0){
-                                    dragInfo = UiTreeHelper.dragInfo(scope.$treeScope.selecteds[0].$scope);
-                                }
-
                                 // move horizontal
+
+
                                 if (pos.dirAx && pos.distAxX >= config.levelThreshold) {
                                     pos.distAxX = 0;
-
                                     // increase horizontal level if previous sibling exists and is not collapsed
                                     if (pos.distX > 0) {
-                                        prev = dragInfo.prev();
+
+
+                                        prev = scope.$treeScope.selecteds[0].$scope.$dragInfo.prev();
                                         if (prev && !prev.collapsed
                                             && prev.accept(scope, prev.childNodesCount())) {
                                             prev.$childNodesScope.$element.append(placeElm);
-
                                             angular.forEach(scope.$treeScope.selecteds, function(selectedElement, index){
                                                 selectedElement.$scope.$dragInfo.moveTo(prev.$childNodesScope, prev.childNodes(), prev.childNodesCount()+index);
                                             });
@@ -542,9 +550,9 @@
                                     // decrease horizontal level
                                     if (pos.distX < 0) {
                                         // we can't decrease a level if an item preceeds the current one
-                                        next = dragInfo.next();
+                                        next = scope.$treeScope.selecteds[0].$scope.$dragInfo.next();
                                         if (!next) {
-                                            target = dragInfo.parentNode(); // As a sibling of it's parent node
+                                            target = scope.$treeScope.selecteds[0].$scope.$dragInfo.parentNode(); // As a sibling of it's parent node
                                             if (target
                                                 && target.$parentNodesScope.accept(scope, target.index() + 1)) {
                                                 target.$element.after(placeElm);
@@ -658,7 +666,7 @@
                         };
 
                         dragEnd = function (e) {
-                            var dragEventArgs = dragInfo.eventArgs(elements, pos);
+                            var dragEventArgs = scope.$treeScope.selecteds[0].$scope.$dragInfo.eventArgs(elements, pos);
                             e.preventDefault();
                             unbindDragMoveEvents();
 
@@ -667,10 +675,9 @@
                                     // promise resolved (or callback didn't return false)
                                     .then(function (allowDrop) {
 
-                                        if (allowDrop !== false && scope.$$allowNodeDrop && !outOfBounds) { // node drop accepted)
+                                        if (allowDrop !== false && scope.$$allowNodeDrop && !outOfBounds) {
                                             angular.forEach(scope.$treeScope.selecteds, function(selectedElement, index){
                                                 selectedElement.$scope.$dragInfo.apply();
-
                                                 scope.$treeScope.$callbacks.dropped(selectedElement.$scope.$dragInfo.eventArgs(elements, pos));
                                             });
                                             // fire the dropped callback only if the move was successful
@@ -684,6 +691,8 @@
                                         bindDragStartEvents();
                                     })
                                     .finally(function () {
+
+
                                         hiddenPlaceElm.replaceWith(scope.$element);
                                         placeElm.remove();
 
@@ -692,14 +701,16 @@
                                             dragElm = null;
                                         }
 
-
                                         scope.$$allowNodeDrop = false;
 
-                                        dragInfo = null;
+
                                         angular.forEach(scope.$treeScope.selecteds, function(selectedElement, index){
+                                            selectedElement.removeClass(config.hiddenClass);
                                             scope.$treeScope.$callbacks.dragStop(selectedElement.$scope.$dragInfo.eventArgs(elements, pos));
+                                            selectedElement.$scope.deselectTransaction();
                                             selectedElement.$scope.$dragInfo = null;
                                         });
+                                        scope.$treeScope.applyDeselectTransaction();
                                         scope.$treeScope.selecteds = [];
 
                                         // Restore cursor in Opera 12.16 and IE

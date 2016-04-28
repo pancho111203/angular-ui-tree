@@ -156,6 +156,12 @@
           }
         };
 
+        $scope.deselectTransaction = function(){
+          if($scope.selected){
+            $scope.$treeScope.$toDeselect.push($scope);
+          }
+        };
+
         $scope.select = function(){
           if(!$scope.selected){
             $scope.selected = true;

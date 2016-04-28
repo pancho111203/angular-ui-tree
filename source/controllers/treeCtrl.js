@@ -23,6 +23,7 @@
         $scope.selecteds = [];
         $scope.$multiSelectKey = undefined;
         $scope.$multiSelect = false;
+        $scope.$toDeselect = [];
 
         // Check if it's a empty tree
         $scope.isEmpty = function () {
@@ -43,6 +44,13 @@
           } else {
             $scope.$emptyElm.remove();
           }
+        };
+
+        $scope.applyDeselectTransaction = function(){
+          angular.forEach($scope.$toDeselect, function(scope){
+            scope.deselect();
+          });
+          $scope.$toDeselect = [];
         };
 
         $scope.resetEmptyElement = this.resetEmptyElement;

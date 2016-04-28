@@ -201,6 +201,12 @@
           }
         };
 
+        $scope.deselectTransaction = function(){
+          if($scope.selected){
+            $scope.$treeScope.$toDeselect.push($scope);
+          }
+        };
+
         $scope.select = function(){
           if(!$scope.selected){
             $scope.selected = true;
@@ -347,6 +353,7 @@
         $scope.selecteds = [];
         $scope.$multiSelectKey = undefined;
         $scope.$multiSelect = false;
+        $scope.$toDeselect = [];
 
         // Check if it's a empty tree
         $scope.isEmpty = function () {
@@ -367,6 +374,13 @@
           } else {
             $scope.$emptyElm.remove();
           }
+        };
+
+        $scope.applyDeselectTransaction = function(){
+          angular.forEach($scope.$toDeselect, function(scope){
+            scope.deselect();
+          });
+          $scope.$toDeselect = [];
         };
 
         $scope.resetEmptyElement = this.resetEmptyElement;
@@ -851,13 +865,10 @@
                                 if (config.hiddenClass) {
                                     angular.forEach(scope.$treeScope.selecteds, function (selectedElement) {
                                         //hiddenPlaceElm.addClass(config.hiddenClass);
-
                                         var selectedElementScope = selectedElement.$scope;
-
-                                        setTimeout(function () {
-                                            selectedElementScope.deselect();
-                                        }, 0);
+                                        selectedElementScope.deselectTransaction();
                                     });
+                                    scope.$treeScope.applyDeselectTransaction();
 
                                     scope.$treeScope.selecteds = [];
                                 }
@@ -883,7 +894,7 @@
 
                                 dragElm = angular.element($window.document.createElement('div')).addClass(treeConfig.dragWrapperClass);
 
-                                pos = UiTreeHelper.positionStarted(eventObj, angular.element(scope.$treeScope.selecteds[0]));
+                                pos = UiTreeHelper.positionStarted(eventObj, scope.$treeScope.selecteds[0]);
 
                                 var firstElement = angular.element(scope.$treeScope.selecteds[0]);
                                 var firstElementOffset = angular.copy(UiTreeHelper.offset(firstElement));
@@ -913,7 +924,7 @@
 
                                     var selectedElementHiddenPlace = angular.element($window.document.createElement(tagName));
                                     if (config.hiddenClass) {
-                                        selectedElementHiddenPlace.addClass(config.hiddenClass);
+                                        //selectedElementHiddenPlace.addClass(config.hiddenClass);
                                     }
                                     hiddenPlaceElm.append(selectedElementHiddenPlace);
 
@@ -924,7 +935,7 @@
 
                                     var clone = selectedElement.clone();
                                     selectedElementDrag.append(clone);
-                                    if (!scope.$treeScope.copy) {
+                                    if (!selectedElementScope.$treeScope.cloneEnabled) {
                                         selectedElement.addClass(config.hiddenClass);
                                     }
 
@@ -1300,20 +1311,22 @@
                                     // promise resolved (or callback didn't return false)
                                     .then(function (allowDrop) {
 
-                                        if (allowDrop !== false && scope.$$allowNodeDrop && !outOfBounds) { // node drop accepted)
+                                        if (allowDrop !== false && scope.$$allowNodeDrop && !outOfBounds) {
                                             angular.forEach(scope.$treeScope.selecteds, function(selectedElement, index){
                                                 selectedElement.$scope.$dragInfo.apply();
-
+                                                selectedElement.removeClass(config.hiddenClass);
                                                 scope.$treeScope.$callbacks.dropped(selectedElement.$scope.$dragInfo.eventArgs(elements, pos));
                                             });
                                             // fire the dropped callback only if the move was successful
 
                                         } else { // drop canceled - revert the node to its original position
+                                            console.log('notallow');
                                             bindDragStartEvents();
                                         }
                                     })
                                     // promise rejected - revert the node to its original position
                                     .catch(function () {
+                                        console.log('err');
                                         bindDragStartEvents();
                                     })
                                     .finally(function () {
@@ -1325,14 +1338,16 @@
                                             dragElm = null;
                                         }
 
-
                                         scope.$$allowNodeDrop = false;
 
                                         dragInfo = null;
+
                                         angular.forEach(scope.$treeScope.selecteds, function(selectedElement, index){
                                             scope.$treeScope.$callbacks.dragStop(selectedElement.$scope.$dragInfo.eventArgs(elements, pos));
+                                            selectedElement.$scope.deselectTransaction();
                                             selectedElement.$scope.$dragInfo = null;
                                         });
+                                        scope.$treeScope.applyDeselectTransaction();
                                         scope.$treeScope.selecteds = [];
 
                                         // Restore cursor in Opera 12.16 and IE

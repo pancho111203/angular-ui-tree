@@ -158,7 +158,7 @@
                 var nodeData = this.source.$modelValue;
 
                 // nodrop enabled on tree or parent
-                if (this.parent.nodropEnabled || this.parent.$treeScope.nodropEnabled) {
+                if (!this.parent || this.parent.nodropEnabled || this.parent.$treeScope.nodropEnabled) {
                   return;
                 }
 
