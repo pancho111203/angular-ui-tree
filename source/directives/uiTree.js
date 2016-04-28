@@ -195,7 +195,6 @@
             });
 
             var keydownHandler = function(e){
-              console.log(scope.selecteds);
               if(e.keyCode === scope.$multiSelectKey){
                 if(!scope.$multiSelect){
                   scope.$apply(function(){

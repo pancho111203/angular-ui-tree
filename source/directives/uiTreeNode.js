@@ -71,12 +71,12 @@
 
                         scope.selected = !!UiTreeHelper.getNodeAttribute(scope, 'selected');
 
-                        scope.$watch(attrs.selected, function (val) {
+                        scope.$watch(attrs[treeConfig.selectedClass], function (val) {
                             scope.selected = angular.isDefined(val);
                         });
                         scope.$watch('selected', function (val) {
                             UiTreeHelper.setNodeAttribute(scope, 'selected', val);
-                            attrs.$set('selected', val);
+                            attrs.$set(treeConfig.selectedClass, val);
                         });
 
                         var toggleSelect = function (e) {
@@ -291,7 +291,7 @@
 
                                     var clone = selectedElement.clone();
                                     selectedElementDrag.append(clone);
-                                    if (!scope.$treeScope.copy) {
+                                    if (!selectedElementScope.$treeScope.cloneEnabled) {
                                         selectedElement.addClass(config.hiddenClass);
                                     }
 
@@ -321,7 +321,6 @@
 
 
                                 angular.forEach(scope.$treeScope.selecteds, function(selectedElement) {
-                                    selectedElement = angular.element(selectedElement);
                                     var selectedElementScope = selectedElement.$scope;
 
                                     selectedElementScope.$apply(function() {
@@ -371,9 +370,12 @@
 
                                 bindDragMoveEvents();
                                 // Fire dragStart callback
-                                scope.$apply(function () {
-                                    scope.$treeScope.$callbacks.dragStart(dragInfo.eventArgs(elements, pos));
+                                angular.forEach(scope.$treeScope.selecteds, function(selectedElement){
+                                    scope.$apply(function () {
+                                        scope.$treeScope.$callbacks.dragStart(selectedElement.$scope.$dragInfo.eventArgs(elements, pos));
+                                    });
                                 });
+
                             }
                             document_height = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight);
                             document_width = Math.max(body.scrollWidth, body.offsetWidth, html.clientWidth, html.scrollWidth, html.offsetWidth);
@@ -647,7 +649,10 @@
                                 }
 
                                 scope.$apply(function () {
-                                    scope.$treeScope.$callbacks.dragMove(dragInfo.eventArgs(elements, pos));
+                                    angular.forEach(scope.$treeScope.selecteds, function(selectedElement){
+                                        scope.$treeScope.$callbacks.dragMove(selectedElement.$scope.$dragInfo.eventArgs(elements, pos));
+                                    });
+
                                 });
                             }
                         };
@@ -665,9 +670,11 @@
                                         if (allowDrop !== false && scope.$$allowNodeDrop && !outOfBounds) { // node drop accepted)
                                             angular.forEach(scope.$treeScope.selecteds, function(selectedElement, index){
                                                 selectedElement.$scope.$dragInfo.apply();
+
+                                                scope.$treeScope.$callbacks.dropped(selectedElement.$scope.$dragInfo.eventArgs(elements, pos));
                                             });
                                             // fire the dropped callback only if the move was successful
-                                            scope.$treeScope.$callbacks.dropped(dragEventArgs);
+
                                         } else { // drop canceled - revert the node to its original position
                                             bindDragStartEvents();
                                         }
@@ -684,13 +691,16 @@
                                             dragElm.remove();
                                             dragElm = null;
                                         }
-                                        scope.$treeScope.$callbacks.dragStop(dragEventArgs);
+
+
                                         scope.$$allowNodeDrop = false;
+
                                         dragInfo = null;
-                                        scope.$treeScope.selecteds = [];
                                         angular.forEach(scope.$treeScope.selecteds, function(selectedElement, index){
+                                            scope.$treeScope.$callbacks.dragStop(selectedElement.$scope.$dragInfo.eventArgs(elements, pos));
                                             selectedElement.$scope.$dragInfo = null;
                                         });
+                                        scope.$treeScope.selecteds = [];
 
                                         // Restore cursor in Opera 12.16 and IE
                                         var oldCur = document.body.getAttribute('ui-tree-cursor');
